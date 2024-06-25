@@ -75,11 +75,13 @@ class GNSSProcessor:
         self.measurements['GpsTimeNanos'] = self.measurements['TimeNanos'] - (self.measurements['FullBiasNanos'] - self.measurements['BiasNanos'])
         gpsepoch = datetime(1980, 1, 6, 0, 0, 0)
         self.measurements['UnixTime'] = pd.to_datetime(self.measurements['GpsTimeNanos'], utc=True, origin=gpsepoch)
-        self.measurements['UnixTime'] = self.measurements['UnixTime']
 
         self.measurements['Epoch'] = 0
         self.measurements.loc[self.measurements['UnixTime'] - self.measurements['UnixTime'].shift() > timedelta(milliseconds=200), 'Epoch'] = 1
         self.measurements['Epoch'] = self.measurements['Epoch'].cumsum()
+
+        # Filter based on signal strength (Cn0DbHz)
+        self.measurements = self.measurements[self.measurements['Cn0DbHz'] > 35]
     
     @staticmethod
     def create_kml_file(coords, output_file):
